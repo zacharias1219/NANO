@@ -40,3 +40,4 @@ ignore = ["E731", "B023", "B905"]
 "nano/ops.py" = ["A001"]
 # experiments import `experiments.common` before NumPy on purpose (it pins BLAS threads)
 "experiments/*.py" = ["I001", "E501"]
+"report/build.py" = ["E501"]  # Markdown templates

@@ -223,7 +223,6 @@ def e2() -> str:
     m, t, C = E["metrics"], E["tables"], E["config"]
     verdict = E["verdict"]
     cells = t["cells"]
-    worst = sorted(cells, key=lambda c: (c["frac_train"], -c["depth"]))
     by_pair = {}
     for c in cells:
         by_pair.setdefault((c["act"], c["init"]), []).append(c)
