@@ -50,6 +50,10 @@ svg { display: block; width: 100%; height: auto; touch-action: none; cursor: gra
 .note { color: var(--muted); font-size: 12px; }
 .err { padding: 24px; }
 code { font-size: 12px; }
+.im2col { margin: 0 0 28px; }
+.im2col .stage { margin: 10px 0; }
+.i2c-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
@@ -83,6 +87,19 @@ code { font-size: 12px; }
       <p class="note">Each forward op is recorded on the tape; backward replays it in reverse.</p>
     </div>
   </div>
+  <section class="card im2col" aria-labelledby="i2c-title">
+    <h2 id="i2c-title">im2col station (CNN)</h2>
+    <p class="note">A 3×3 kernel over a 5×5 input. Forward: every receptive field is copied into one column,
+      so the convolution becomes a single matmul. Backward: col2im adds each column's gradient back onto the
+      pixels it came from; overlapping windows accumulate, which is why col2im is the adjoint of im2col (D8.2).</p>
+    <div class="i2c-controls">
+      <button id="i2cFwd" class="primary">Run im2col + matmul</button>
+      <button id="i2cBack" disabled>Run col2im (backward)</button>
+      <span class="note" id="i2cStatus">Each of the 9 output pixels has a 9-value receptive field.</span>
+    </div>
+    <div class="stage"><svg id="i2c" viewBox="0 0 1100 290" role="img" aria-label="im2col: patches to columns, matmul, col2im"></svg></div>
+    <div class="stats" id="i2cStats"></div>
+  </section>
 </main>
 <script>
 "use strict";
@@ -312,6 +329,88 @@ svg.addEventListener("pointermove", (e) => {
 });
 svg.addEventListener("pointerup", () => { drag = null; });
 
+// ---------------------------------------------------------------- im2col station (M8)
+const I2C = { n: 5, k: 3, step: -1, back: -1, timer: null };
+const i2c = $("i2c");
+function rect(x, y, w, h, fill, extra, parent) {
+  return el("rect", Object.assign({ x, y, width: w, height: h, fill, stroke: "var(--edge)", "stroke-width": 0.6 }, extra || {}), parent || i2c);
+}
+function txt(x, y, s, size, fill, anchor) {
+  const t = el("text", { x, y, "font-size": size || 12, fill: fill || "var(--ink)", "text-anchor": anchor || "middle" }, i2c);
+  t.textContent = s; return t;
+}
+function drawI2C() {
+  i2c.innerHTML = "";
+  const { n, k } = I2C, o = n - k + 1, P = o * o, K = k * k, c = 30;
+  const win = (p) => [Math.floor(p / o), p % o];
+  const inWin = (p, r, q) => { const [i, j] = win(p); return r >= i && r < i + k && q >= j && q < j + k; };
+  // input grid
+  const ix = 40, iy = 60;
+  txt(ix + n * c / 2, iy - 18, "input 5 × 5", 13);
+  for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) {
+    let fill = "var(--box)", op = 1;
+    if (I2C.back >= 0) {
+      let cnt = 0; for (let p = 0; p <= Math.min(I2C.back, P - 1); p++) if (inWin(p, r, q)) cnt++;
+      fill = "var(--grad)"; op = cnt / K;  // shading only: how many windows have added into this pixel
+    } else if (I2C.step >= 0 && I2C.step < P && inWin(I2C.step, r, q)) fill = "var(--fwd)";
+    rect(ix + q * c, iy + r * c, c, c, fill, { "fill-opacity": I2C.back >= 0 ? Math.max(op, 0.05) : 1 });
+  }
+  // cols matrix: K rows (kernel positions) x P columns (output pixels)
+  const mx = 300, my = 40, w = 22, h = 22;
+  txt(mx + P * w / 2, my - 10, "cols = im2col(x): 9 × 9", 13);
+  for (let a = 0; a < K; a++) for (let p = 0; p < P; p++) {
+    const filled = I2C.back >= 0 ? true : p <= I2C.step;
+    const active = (I2C.back < 0 && p === I2C.step) || (I2C.back >= 0 && p === I2C.back);
+    rect(mx + p * w, my + a * h, w, h, active ? (I2C.back >= 0 ? "var(--grad)" : "var(--fwd)") : (filled ? "var(--box-top)" : "var(--panel)"));
+  }
+  // kernel row and matmul
+  const kx = 560, ky = my + K * h + 20;
+  txt(kx, ky + 4, "out = W_mat (1 × 9) @ cols (9 × 9)  →  1 × 9  →  reshape 3 × 3", 12, "var(--muted)");
+  // output grid
+  const ox = 860, oy = 75;
+  txt(ox + o * c * 1.2 / 2, oy - 18, "output 3 × 3", 13);
+  for (let p = 0; p < P; p++) {
+    const [i, j] = win(p);
+    const done = I2C.back >= 0 || p <= I2C.step;
+    rect(ox + j * c * 1.2, oy + i * c * 1.2, c * 1.2, c * 1.2, done ? "var(--fwd)" : "var(--panel)",
+      { "fill-opacity": done ? (I2C.back >= 0 ? 0.35 : 0.85) : 1 });
+  }
+  // arrows
+  const arrow = (x1, y1, x2, y2, col) => el("line", { x1, y1, x2, y2, stroke: col, "stroke-width": 2, "marker-end": "url(#arr)" }, i2c);
+  const defs = el("defs", {}, i2c), m = el("marker", { id: "arr", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
+  el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--muted)" }, m);
+  arrow(ix + n * c + 12, iy + n * c / 2, mx - 52, iy + n * c / 2, "var(--muted)");
+  arrow(mx + P * w + 12, my + K * h / 2, ox - 16, oy + o * c * 0.6, "var(--muted)");
+  if (I2C.back >= 0) txt(ix, iy + n * c + 26, "shade = windows added so far (centre pixel: 9)", 11, "var(--grad)", "start");
+}
+function i2cStats() {
+  const acc = DATA.acceptance || {}, e5 = (DATA.experiments.E5 || {}).metrics || {};
+  const v = (m) => m && m.value !== undefined ? fmt(m.value) : "n/a";
+  $("i2cStats").innerHTML = [
+    stat(acc.A6 ? fmt(acc.A6.value) : "n/a", "im2col vs naive loop, max abs diff (A6)"),
+    stat(v(e5.im2col_speedup_over_naive) + "×", "im2col speedup over the naive loop (E5)"),
+    stat(v(e5.cnn_slowdown_float64) + "×", "CNN step slowdown vs PyTorch (E5)"),
+  ].join("");
+}
+$("i2cFwd").onclick = () => {
+  clearInterval(I2C.timer); I2C.step = -1; I2C.back = -1; $("i2cBack").disabled = true;
+  I2C.timer = setInterval(() => {
+    I2C.step++;
+    $("i2cStatus").textContent = `window ${Math.min(I2C.step + 1, 9)} of 9 → column ${Math.min(I2C.step + 1, 9)}`;
+    if (I2C.step >= 8) { clearInterval(I2C.timer); $("i2cBack").disabled = false; $("i2cStatus").textContent = "forward done: one matmul produced all 9 outputs"; }
+    drawI2C();
+  }, 420);
+};
+$("i2cBack").onclick = () => {
+  clearInterval(I2C.timer); I2C.back = -1; $("i2cBack").disabled = true;
+  I2C.timer = setInterval(() => {
+    I2C.back++;
+    $("i2cStatus").textContent = `col2im: column ${Math.min(I2C.back + 1, 9)} of 9 added back onto its window`;
+    if (I2C.back >= 8) { clearInterval(I2C.timer); $("i2cStatus").textContent = "backward done: overlapping windows accumulated (centre pixel received 9 contributions)"; }
+    drawI2C();
+  }, 420);
+};
+
 (async () => {
   DATA = await load();
   if (!DATA || !DATA.experiments || !DATA.experiments.E2) {
@@ -322,6 +421,8 @@ svg.addEventListener("pointerup", () => { drag = null; });
   const depths = DATA.experiments.E2.config.depths;
   $("depth").innerHTML = depths.map((d) => `<option value="${d}"${d === 16 ? " selected" : ""}>${d}</option>`).join("");
   selectCell();
+  drawI2C();
+  i2cStats();
 })();
 </script>
 </body>
