@@ -248,3 +248,21 @@ E2's predictor $r = \log_{10}(\lVert\bar W^1\rVert/\lVert\bar W^{D+1}\rVert)$ is
 approximately $D\log_{10} g$ plus a depth-independent offset: a linear-in-depth measure of
 how far the network is from dynamical isometry *at step 0*. H1 asks whether this number,
 which costs four backward passes, predicts the outcome of a full training run.
+
+**Why r is blind to uniform collapse (post-hoc, written after the E2 result).** Write the
+two weight gradients as outer products, $\bar W^1 = \bar a^1 x^\top$ and
+$\bar W^{D+1} = \bar a^{D+1} (h^{D})^\top$. With per-layer gain $g$ in *both* directions
+(as for tanh or ReLU, where $\phi' \approx$ const near the operating point),
+
+$$\lVert\bar a^1\rVert \approx g^{D}\lVert\bar a^{D+1}\rVert, \qquad \lVert h^{D}\rVert \approx g^{D}\lVert x\rVert
+\quad\Longrightarrow\quad
+r = \log_{10}\frac{\lVert\bar a^1\rVert\,\lVert x\rVert}{\lVert\bar a^{D+1}\rVert\,\lVert h^{D}\rVert} \approx 0 .$$
+
+The factor $g^D$ that starves the input layer's gradient also starves the output layer's
+*input*, and the two cancel in the ratio. Both weight gradients are tiny, as the flat-but-low
+curves in the E2 gradient-norm figure show, yet r reads as healthy. Sigmoid escapes the
+cancellation because its forward signal does not collapse ($\sigma(0) = 1/2$ keeps
+$\lVert h^D\rVert$ of order one) while its backward gain $\le 1/4$ still decays, so r falls
+linearly with depth. This is the mechanism behind H1's partial confirmation, and the reason
+the absolute norm $\lVert\bar W^1\rVert$ (exploratory X1), which keeps the $g^{2D}$ factor,
+separates the two outcomes far better.
