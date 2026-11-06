@@ -9,13 +9,13 @@ format:
 
 # Nano: a NumPy neural engine, verified and then broken on purpose
 
-*Project 1A. Generated from [`results.json`](results.json) (schema 1.0, commit `634f287fd4`,
-2026-11-06T10:12:04+00:00). Hardware: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 cores, 15.7 GB RAM, Linux 6.18.44-fc-v242;
+*Project 1A. Generated from [`results.json`](results.json) (schema 1.0, commit `f0e848d306`,
+2026-11-06T11:30:54+00:00). Hardware: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 cores, 15.7 GB RAM, Linux 6.18.44-fc-v242;
 Python 3.13.18, NumPy 2.5.3 (scipy-openblas 0.3.34.106.0), PyTorch 2.15.0 (oracle only).*
 
 ## Acceptance criteria
 
-9 of 10 criteria pass in this build. Each row is checked by a script, not by hand.
+10 of 10 criteria pass in this build. Each row is checked by a script, not by hand.
 
 | ID | Criterion | Threshold | Measured | Result | Checked by |
 |---|---|---|---|---|---|
@@ -28,7 +28,7 @@ Python 3.13.18, NumPy 2.5.3 (scipy-openblas 0.3.34.106.0), PyTorch 2.15.0 (oracl
 | A7 | Bug-injection demo | checker names the injected op in 5 of 5 bugs | 5 of 5 | PASS | `experiments/bughunt.py` |
 | A8 | E2 study pre-registered | hypothesis, metric and threshold committed before first run; CIs on every headline number | preregistration_commit: 914ecfa 2026-11-06T08:28:13+00:00; config_freeze_commit: 35cf082 2026-11-06T08:47:15+00:00; config_frozen: yes; headline_numbers_with_ci: yes; verdict: partially confirmed | PASS | `repo history plus report` |
 | A9 | Library size | under 1500 lines in nano/ | 1,110 | PASS | `make loc` |
-| A10 | Reproduction | make repro succeeds from a clean clone and regenerates results.json | fragments_present: E1, E2, E3, E4, E5, E6, FAILURES; ran_under_make_repro: yes; from_clean_clone: no | pending (CI) | `CI job .github/workflows/repro.yml` |
+| A10 | Reproduction | make repro succeeds from a clean clone and regenerates results.json | fragments_present: E1, E2, E3, E4, E5, E6, FAILURES; ran_under_make_repro: yes; from_clean_clone: no; clean_clone_commit: 634f287fd4; clean_clone_succeeded: yes; deterministic_results_identical: yes | PASS | `CI job .github/workflows/repro.yml; scripts/verify_repro.py` |
 
 ## 1. Problem and architecture
 
@@ -443,6 +443,8 @@ git clone <this repo> && cd NANO
 make install
 make repro          # data -> tests -> E1..E6 + failures -> results.json -> this report
 ```
+
+**Verified from a clean clone.** A fresh `git clone` of commit `634f287fd4` ran `make repro` to completion with every sweep run recomputed from scratch; its E2, E3 and E4 numbers are identical to the published ones (`scripts/verify_repro.py`, record in `results/REPRO.json`).
 
 Measured compute in this build: 6.2 CPU-hours summed over experiments (E2 dominates;
 it runs on all cores, so wall time is roughly that divided by the core count). `make repro QUICK=1`

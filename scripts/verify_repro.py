@@ -33,8 +33,12 @@ def main():
         a, b = metrics(clone / "results" / f"{e}.json"), metrics(ROOT / "results" / f"{e}.json")
         diffs = {k: [a.get(k), b.get(k)] for k in set(a) | set(b) if a.get(k) != b.get(k)}
         compared[e] = {"identical": not diffs, "differences": diffs}
+    # a fresh clone cannot contain results/raw (gitignored); prove every cached sweep run was written after cloning
+    cloned_at = (clone / ".git" / "config").stat().st_mtime
+    raw = list((clone / "results" / "raw").rglob("*.json"))
+    fresh = bool(raw) and min(p.stat().st_mtime for p in raw) > cloned_at
     doc = {
-        "id": "REPRO", "clone_commit": commit,
+        "id": "REPRO", "clone_commit": commit, "cache_created_after_clone": fresh, "n_cached_runs": len(raw),
         "make_repro_succeeded": "make repro: done" in text,
         "clone_acceptance": {k: v["pass"] for k, v in acc.items()},
         "clone_A10": acc["A10"]["value"],

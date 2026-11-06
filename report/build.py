@@ -451,6 +451,16 @@ reimplemented reference.
 """
 
 
+def repro_evidence() -> str:
+    v = R["acceptance"].get("A10", {}).get("value", {})
+    if not isinstance(v, dict) or "clean_clone_commit" not in v:
+        return ""
+    same = "identical to" if v.get("deterministic_results_identical") else "**different from**"
+    return (f"**Verified from a clean clone.** A fresh `git clone` of commit `{v['clean_clone_commit']}` ran `make repro` "
+            f"to completion with every sweep run recomputed from scratch; its E2, E3 and E4 numbers are {same} "
+            "the published ones (`scripts/verify_repro.py`, record in `results/REPRO.json`).")
+
+
 def repro() -> str:
     total = sum(e.get("runtime_s", 0) for e in X.values())
     return f"""## 10. Reproduce everything
@@ -460,6 +470,8 @@ git clone <this repo> && cd NANO
 make install
 make repro          # data -> tests -> E1..E6 + failures -> results.json -> this report
 ```
+
+{repro_evidence()}
 
 Measured compute in this build: {f(total / 3600, 1)} CPU-hours summed over experiments (E2 dominates;
 it runs on all cores, so wall time is roughly that divided by the core count). `make repro QUICK=1`

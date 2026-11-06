@@ -92,7 +92,7 @@ def acceptance(frags: dict) -> dict:
     ok = len(present) == len(EXPECTED) and repro
     rec_path = ROOT / "results" / "REPRO.json"  # evidence of a separate clean-clone run (scripts/verify_repro.py)
     rec = json.loads(rec_path.read_text()) if rec_path.exists() else {}
-    verified = bool(rec.get("make_repro_succeeded") and rec.get("clone_A10", {}).get("from_clean_clone"))
+    verified = bool(rec.get("make_repro_succeeded") and rec.get("cache_created_after_clone"))
     value = {"fragments_present": present, "ran_under_make_repro": repro, "from_clean_clone": clean}
     if rec:
         value.update(clean_clone_commit=rec["clone_commit"][:10], clean_clone_succeeded=rec["make_repro_succeeded"],
