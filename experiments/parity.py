@@ -155,21 +155,31 @@ def main():
 
 
 def drift_figure(curves) -> str:
+    common.RAW.mkdir(parents=True, exist_ok=True)
+    np.savez(common.RAW / "e1_curves.npz", **{f"{k}__{i}": v[i] for k, v in curves.items() for i in (0, 1)})
     plt = common.plt()
-    fig, axes = plt.subplots(1, len(SETUPS), figsize=(13, 3.6), sharey=True)
+    fig, axes = plt.subplots(1, len(SETUPS), figsize=(13, 3.8), sharey=True)
+    series = lambda setup: [  # noqa: E731
+        ("float64: Nano vs PyTorch", common.PALETTE["float64"], "-",
+         np.abs(np.subtract(*curves[f"{setup}_float64"]))),
+        ("float32: Nano vs PyTorch", common.PALETTE["float32"], "-",
+         np.abs(np.subtract(*curves[f"{setup}_float32"]))),
+        ("Nano float32 vs Nano float64", common.PALETTE["grey"], "--",
+         np.abs(curves[f"{setup}_float32"][0] - curves[f"{setup}_float64"][0]))]
     for ax, setup in zip(axes, SETUPS):
-        for dname in ("float64", "float32"):
-            ln, lt = curves[f"{setup}_{dname}"]
-            ax.semilogy(np.maximum(np.abs(ln - lt), 1e-18), color=common.PALETTE[dname], lw=1.2,
-                        label=f"{dname}: Nano vs PyTorch")
-        d = np.abs(curves[f"{setup}_float32"][0] - curves[f"{setup}_float64"][0])
-        ax.semilogy(np.maximum(d, 1e-18), color=common.PALETTE["grey"], lw=1, ls="--", label="Nano float32 vs float64")
+        for label, color, ls, d in series(setup):
+            t = np.arange(len(d))
+            nz = d > 0
+            ax.scatter(t[nz], d[nz], s=3, color=color, alpha=0.25, linewidths=0)
+            ax.plot(t, np.maximum.accumulate(np.maximum(d, 1e-18)), color=color, lw=2, ls=ls, label=label)
+        ax.set_yscale("log")
+        ax.set_ylim(1e-17, 1)
         ax.axhline(1e-8, color="k", lw=0.8, ls=":")
-        ax.text(2, 2e-8, "A4 bound 1e-8", fontsize=8)
+        ax.text(len(d) * 0.02, 2e-8, "A4 bound 1e-8", fontsize=8)
         ax.set_title(setup.replace("_", " "))
         ax.set_xlabel("training step")
-    axes[0].set_ylabel("|loss difference| (zero shown at 1e-18)")
-    axes[0].legend(fontsize=8, loc="center right")
+    axes[0].set_ylabel("|loss difference|: worst so far (line), per step (dots)")
+    axes[1].legend(fontsize=8, loc="center right")
     fig.suptitle("E1 run parity: float64 stays at rounding level, float32 drifts by orders of magnitude", y=1.03)
     return common.save(fig, "e1_float32_drift.png")
 
@@ -195,5 +205,14 @@ def op_figure(ops) -> str:
     return common.save(fig, "e1_op_errors.png")
 
 
+def replot() -> None:
+    """Redraw the drift figure from results/raw/e1_curves.npz without retraining."""
+    z = np.load(common.RAW / "e1_curves.npz")
+    keys = {k.rsplit("__", 1)[0] for k in z.files}
+    drift_figure({k: (z[f"{k}__0"], z[f"{k}__1"]) for k in keys})
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    replot() if "--replot" in sys.argv else main()

@@ -65,11 +65,11 @@ def softmax_overflow() -> dict:
 # --------------------------------------------------------------------------- F3 dead ReLUs
 def dead_relus(seeds=(0, 1, 2)) -> dict:
     X, y = load("mnist", "train", n=5000)
-    lrs = [0.01, 0.1, 0.5, 1.0]
+    lrs = [0.01, 0.1, 0.3, 0.4, 0.5]
     steps = 100 if common.QUICK else 400
     res = {}
     for lr in lrs:
-        traces, finals, losses = [], [], []
+        traces, finals, losses, diverged = [], [], [], []
         for seed in seeds:
             model = nn.mlp(784, 128, 4, 10, act="relu", init="he", rng=np.random.default_rng(seed))
             probe = probes.ActivationProbe(model)
@@ -83,28 +83,38 @@ def dead_relus(seeds=(0, 1, 2)) -> dict:
                         trace.append(probe.summary()["max_dead"])
                     loss = softmax_cross_entropy(model(Tensor(X[idx])), y=y[idx])
                     loss_v = loss.item()
-                    if not np.isfinite(loss_v):
+                    if not np.isfinite(loss_v):  # the trace stops: divergence, not death, ends this run
+                        diverged.append(t)
                         break
                     opt.zero_grad()
                     loss.backward()
                     opt.step()
-                model(Tensor(X[:512]))
-            trace.append(probe.summary()["max_dead"])
+                else:
+                    model(Tensor(X[:512]))
+                    trace.append(probe.summary()["max_dead"])
+                    finals.append(trace[-1])
             traces.append(trace)
-            finals.append(trace[-1])
             losses.append(loss_v)
         n = max(len(t) for t in traces)
-        res[f"{lr:g}"] = {"dead_final": evalkit.bootstrap_ci(finals, n_boot=2000), "final_batch_loss": losses,
+        res[f"{lr:g}"] = {"dead_final": evalkit.bootstrap_ci(finals, n_boot=2000) if finals else evalkit.metric(None),
+                          "diverged_seeds": len(diverged), "diverged_at_step": diverged, "final_batch_loss": losses,
+                          "traces": traces,
                           "trace_mean": np.nanmean([t + [np.nan] * (n - len(t)) for t in traces], axis=0).tolist()}
     plt = common.plt()
     fig, ax = plt.subplots(figsize=(7, 4))
     cmap = plt.get_cmap("magma")
     for k, lr in enumerate(lrs):
-        tr = res[f"{lr:g}"]["trace_mean"]
-        ax.plot(np.arange(len(tr)) * 20, tr, color=cmap(0.15 + 0.7 * k / len(lrs)), lw=2, label=f"lr = {lr:g}")
+        r = res[f"{lr:g}"]
+        col = cmap(0.1 + 0.75 * k / len(lrs))
+        lab = f"lr = {lr:g}" + (f" ({r['diverged_seeds']}/3 seeds: loss NaN by step {max(r['diverged_at_step'])})"
+                                if r["diverged_seeds"] else "")
+        for j, tr in enumerate(r["traces"]):
+            ax.plot(np.arange(len(tr)) * 20, tr, color=col, lw=1.6, alpha=0.9, label=lab if j == 0 else None)
+            if len(tr) < n:  # this seed's loss became non-finite: mark where the trace stops
+                ax.plot((len(tr) - 1) * 20, tr[-1], "x", color=col, ms=9, mew=2.2)
     ax.set_xlabel("SGD step")
     ax.set_ylabel("fraction of dead units (worst layer)")
-    ax.set_title("F3: high learning rates kill ReLUs (He init, 4 x 128, mean of 3 seeds)")
+    ax.set_title("F3: high learning rates kill ReLUs for good (He init, 4 x 128, 3 seeds)")
     ax.legend()
     return {"lrs": lrs, "steps": steps, "results": res, "figure": common.save(fig, "f3_dead_relus.png")}
 
