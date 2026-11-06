@@ -304,8 +304,9 @@ def e3() -> str:
     rows = [[r["optimizer"], r["init"], r["schedule"], ci(r["test_acc"]),
              f"{f(r['steps_to_target']['value'])} [{f(r['steps_to_target']['iqr'][0])}, {f(r['steps_to_target']['iqr'][1])}]",
              r["n_censored"]] for r in sorted(t["configs"], key=lambda r: -r["test_acc"]["value"])]
-    con = [[c["factor"], f"{c['level']} − {c['reference']}", ci(c["acc_diff"], 4), "**yes**" if c["separated"] else "no"]
-           for c in t["contrasts"]]
+    con = [[c["factor"], f"{c['level']} − {c['reference']}", ci(c["acc_diff"], 4),
+            ci(c.get("acc_diff_seed_cluster"), 4), f(c.get("p_sign_flip_seed_level")),
+            "**yes**" if c["separated"] else "no"] for c in t["contrasts"]]
     sep = [c for c in t["contrasts"] if c["separated"]]
     mattered = "; ".join(f"{c['level']} vs {c['reference']} ({c['factor']}): {f(c['acc_diff']['value'] * 100, 2)} points"
                          for c in sorted(sep, key=lambda c: -abs(c["acc_diff"]["value"]))) or "no contrast was separated"
@@ -314,7 +315,7 @@ def e3() -> str:
 {C['model']} on {f(C['n_train'])} MNIST images, {C['steps']} steps of batch {C['batch']}, {len(C['seeds'])} seeds per
 configuration, test accuracy on {f(C['n_test'])} held-out images. Each optimizer uses one
 standard learning rate fixed in advance (SGD 0.1; momentum/Nesterov 0.01 with μ = 0.9; Adam/AdamW 1e-3).
-Only differences whose paired-bootstrap 95% CI excludes zero are claimed.
+Only differences whose paired 95% CIs (run-level and seed-clustered) both exclude zero are claimed.
 
 **What actually mattered.** {mattered}.
 
@@ -322,7 +323,11 @@ Only differences whose paired-bootstrap 95% CI excludes zero are claimed.
 
 Paired contrasts (each run paired with the reference-level run that shares its seed and every other factor):
 
-{table(["Factor", "Contrast", "Δ test accuracy [95% CI]", "Separated"], con)}
+{table(["Factor", "Contrast", "Δ test acc. [95% CI, run pairs]", "[95% CI, seed-clustered]",
+        "sign-flip p (5 seeds)", "Separated"], con)}
+
+A contrast is claimed only when both CIs exclude zero. With five seeds the exact sign-flip test
+cannot go below p = 0.0625, so it is shown for transparency rather than used as the gate.
 
 <details><summary>All {len(rows)} configurations</summary>
 

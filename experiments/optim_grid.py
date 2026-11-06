@@ -100,7 +100,7 @@ def main():
         for lev in levels:
             if lev == ref:
                 continue
-            a, b = [], []
+            a, b, seeds_of = [], [], []
             for r in recs:
                 if r[factor] != lev:
                     continue
@@ -108,9 +108,17 @@ def main():
                             and all(q[f] == r[f] for f in ("optimizer", "init", "schedule") if f != factor))
                 a.append(r["test_acc"])
                 b.append(twin["test_acc"])
+                seeds_of.append(r["seed"])
             d = evalkit.paired_bootstrap_diff(a, b, n_boot=5000)
+            # pairs that share a seed are not independent: also bootstrap the per-seed mean difference (n = 5)
+            diff, sid = np.array(a) - np.array(b), np.array(seeds_of)
+            per_seed = [float(diff[sid == s].mean()) for s in sorted(set(seeds_of))]
+            dc = evalkit.bootstrap_ci(per_seed, n_boot=5000)
+            sep = lambda m: bool(m["ci"][0] > 0 or m["ci"][1] < 0)  # noqa: E731
             contrasts.append({"factor": factor, "level": lev, "reference": ref, "acc_diff": d,
-                              "separated": bool(d["ci"][0] > 0 or d["ci"][1] < 0)})
+                              "acc_diff_seed_cluster": dc, "per_seed_diff": per_seed,
+                              "p_sign_flip_seed_level": evalkit.paired_permutation_test(per_seed, [0.0] * len(per_seed)),
+                              "separated": sep(d) and sep(dc)})
     best = max(table, key=lambda r: r["test_acc"]["value"])
     figs = [figure(table)]
     evalkit.write_fragment("E3", {
@@ -123,7 +131,10 @@ def main():
         "figures": figs, "runtime_s": time.perf_counter() - t0,
         "notes": ["Test accuracy on 2,000 held-out MNIST test images after the fixed step budget.",
                   "Steps-to-target: first step where the EMA(0.9) training loss <= 0.3; censored runs count as "
-                  "budget + 1.", "One standard LR per optimizer, not tuned per cell."],
+                  "budget + 1.", "One standard LR per optimizer, not tuned per cell.",
+                  "A contrast is 'separated' only if both the pair-level paired-bootstrap CI and the seed-clustered CI "
+                  "(bootstrap over the 5 per-seed mean differences) exclude zero. With 5 seeds the exact sign-flip test "
+                  "cannot go below p = 0.0625; it is reported for transparency."],
     }, common.ROOT / "results")
 
 
