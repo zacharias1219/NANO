@@ -38,3 +38,5 @@ ignore = ["E731", "B023", "B905"]
 
 [tool.ruff.lint.per-file-ignores]
 "nano/ops.py" = ["A001"]
+# experiments import `experiments.common` before NumPy on purpose (it pins BLAS threads)
+"experiments/*.py" = ["I001", "E501"]
