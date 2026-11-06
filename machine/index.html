@@ -69,7 +69,7 @@ code { font-size: 12px; }
   </div>
 </header>
 <main>
-  <div class="stage"><svg id="svg" viewBox="0 0 1100 560" role="img" aria-label="Isometric backprop machine"></svg></div>
+  <div class="stage"><svg id="svg" viewBox="0 120 1100 400" role="img" aria-label="Isometric backprop machine"></svg></div>
   <div class="grid">
     <div class="card">
       <h2 id="cellTitle">Cell</h2>
@@ -124,7 +124,7 @@ function el(tag, attrs, parent) {
 function P(x, y, z) {
   const a = turn * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
   const xr = x * c - z * s, zr = x * s + z * c;
-  return [550 + xr * 0.87 - zr * 0.5, 330 + xr * 0.25 + zr * 0.43 - y];
+  return [550 + xr * 0.87 - zr * 0.5, 360 + xr * 0.25 + zr * 0.43 - y];
 }
 const pts = (arr) => arr.map((p) => P(...p).join(",")).join(" ");
 
@@ -222,7 +222,7 @@ function draw() {
   el("ellipse", { cx: rx, cy: ry, rx: 9, ry: 9, fill: "var(--tape)" });
   const t = el("text", { x: rx, y: ry + 44, "text-anchor": "middle", "font-size": 11, fill: "var(--ink)" });
   t.textContent = "tape";
-  const lab = el("text", { x: 24, y: 30, "font-size": 12, fill: "var(--muted)" });
+  const lab = el("text", { x: 24, y: 145, "font-size": 12, fill: "var(--muted)" });
   lab.textContent = phase === "idle" ? "Feed a batch to run the forward pass." :
     phase === "forward" ? `forward: recording layer ${Math.min(fwdStep + 1, L)} of ${L} on the tape` :
     phase === "ready" ? "forward done: loss computed. Run backward." :
@@ -269,7 +269,7 @@ function selectCell() {
     stat(fmt(n[0]), "‖∂L/∂W‖ first layer"),
     stat(fmt(n[n.length - 1]), "‖∂L/∂W‖ output layer"),
     stat(fmt(cell.final_loss_median), "median final loss"),
-    stat(fmt(cell.best_lr), "winning learning rate"),
+    stat(fmt(cell.best_lr), "most frequent winning LR"),
   ].join("");
   renderTape(0, 0);
   draw();
