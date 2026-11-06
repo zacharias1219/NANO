@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zacharias1219/NANO/evalkit/results.schema.json",
+  "title": "Portfolio results.json (schema v1.0)",
+  "description": "One file per project. Every number shown in a report or figure must trace to this file.",
+  "type": "object",
+  "required": ["schema_version", "project", "generated_at", "git", "environment", "acceptance", "experiments"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+$"},
+    "project": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "git": {
+      "type": "object",
+      "required": ["commit", "dirty"],
+      "properties": {"commit": {"type": ["string", "null"]}, "dirty": {"type": ["boolean", "null"]}}
+    },
+    "environment": {"$ref": "#/$defs/environment"},
+    "acceptance": {
+      "type": "object",
+      "patternProperties": {"^A[0-9]+$": {"$ref": "#/$defs/criterion"}},
+      "additionalProperties": false
+    },
+    "experiments": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/experiment"}
+    }
+  },
+  "$defs": {
+    "number": {"type": ["number", "string", "null"], "description": "Non-finite floats are stored as the strings nan, inf, -inf."},
+    "environment": {
+      "type": "object",
+      "required": ["python", "numpy", "blas", "cpu", "cores", "os"],
+      "properties": {
+        "python": {"type": "string"}, "numpy": {"type": "string"}, "blas": {"type": "string"},
+        "torch": {"type": ["string", "null"]}, "cpu": {"type": "string"}, "cores": {"type": ["integer", "null"]},
+        "ram_gb": {"type": ["number", "null"]}, "os": {"type": "string"}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {"$ref": "#/$defs/number"},
+        "ci": {"oneOf": [{"type": "null"}, {"type": "array", "items": {"$ref": "#/$defs/number"}, "minItems": 2, "maxItems": 2}]},
+        "n": {"type": ["integer", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "method": {"type": ["string", "null"]}
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "required": ["criterion", "threshold", "value", "pass", "checked_by"],
+      "properties": {
+        "criterion": {"type": "string"},
+        "threshold": {"type": "string"},
+        "value": {},
+        "pass": {"type": ["boolean", "null"]},
+        "checked_by": {"type": "string"}
+      }
+    },
+    "experiment": {
+      "type": "object",
+      "required": ["id", "title", "generated_at", "environment"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "generated_at": {"type": "string"},
+        "environment": {"$ref": "#/$defs/environment"},
+        "config": {"type": "object"},
+        "metrics": {"type": "object", "additionalProperties": {"$ref": "#/$defs/metric"}},
+        "tables": {"type": "object"},
+        "figures": {"type": "array", "items": {"type": "string"}},
+        "runtime_s": {"type": "number"},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

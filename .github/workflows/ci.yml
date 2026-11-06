@@ -1,0 +1,30 @@
+name: ci
+# Fast subset on every commit (PRD section 13): lint, line budget, unit + parity tests.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install (PyTorch CPU wheel is the oracle)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e ".[dev]"
+      - name: Lint
+        run: make lint
+      - name: A9 line budget
+        run: make loc
+      - name: Tests (A1, A2, A5, A6, properties, isolation)
+        run: make test-fast

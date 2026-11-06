@@ -1,0 +1,8 @@
+# Pinned dev environment used for the published results (see report/results.json for the exact run).
+numpy==2.5.3
+torch==2.15.0
+pytest>=8
+matplotlib>=3.9
+jsonschema>=4.20
+ruff>=0.6
+scipy>=1.13

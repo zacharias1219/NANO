@@ -1,0 +1,38 @@
+name: repro
+# A10: `make repro` from a clean clone regenerates results.json, every figure and the report.
+# Runs weekly and on demand. `quick: true` runs the reduced pipeline (minutes, not hours).
+on:
+  schedule:
+    - cron: "41 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Reduced-size run (QUICK=1)"
+        type: boolean
+        default: false
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e ".[dev]"
+      - name: make repro
+        run: make repro QUICK=${{ inputs.quick && '1' || '0' }}
+      - name: Acceptance gate
+        run: python -m experiments.collect --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repro-report
+          path: |
+            report/results.json
+            report/REPORT.md
+            report/figures/

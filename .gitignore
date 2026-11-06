@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+# datasets are downloaded and verified by checksum (experiments/datasets.json)
+data/
+# raw per-run arrays; the published numbers live in results/ and report/results.json
+results/raw/
+report/_site/
+report/.quarto/
+.DS_Store

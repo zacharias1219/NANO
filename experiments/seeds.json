@@ -1,0 +1,6 @@
+{
+  "_comment": "The fixed seed list (PRD section 13). E2 uses seeds[0:5]; H1 fits its threshold on seeds 0-2 and tests on 3-4.",
+  "seeds": [0, 1, 2, 3, 4],
+  "data_subset_seed": 20261106,
+  "parity_seed": 1234
+}
