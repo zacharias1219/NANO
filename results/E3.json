@@ -1,6 +1,6 @@
 {
  "id": "E3",
- "generated_at": "2026-11-06T09:02:18+00:00",
+ "generated_at": "2026-11-06T09:02:40+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -19,7 +19,7 @@
   "argv": "/home/user/NANO/experiments/optim_grid.py"
  },
  "git": {
-  "commit": "ac99c3285d8affe7a8e6b4720d06250c3125803a",
+  "commit": "fef6cce340a2b8662b7bced3c25c8c434cbf8b9c",
   "dirty": true
  },
  "title": "E3 optimizer x init x schedule comparison (MNIST MLP)",
@@ -1645,7 +1645,7 @@
  "figures": [
   "figures/e3_optim_grid.png"
  ],
- "runtime_s": 3.937490809999872,
+ "runtime_s": 3.7837906269996893,
  "notes": [
   "Test accuracy on 2,000 held-out MNIST test images after the fixed step budget.",
   "Steps-to-target: first step where the EMA(0.9) training loss <= 0.3; censored runs count as budget + 1.",

@@ -154,10 +154,12 @@ def figure(table) -> str:
             ax.bar(np.arange(len(opts)) + k * width, v, width, yerr=[lo, hi], color=colors[i], label=i, capsize=2)
         ax.set_xticks(np.arange(len(opts)) + width, opts, rotation=20)
         ax.set_title(s)
-        ax.set_ylim(0.8, 1.0)
+        lows = [r["test_acc"]["ci"][0] for r in table]
+        ax.set_ylim(np.floor(min(lows) * 100 - 1) / 100, np.ceil(max(r["test_acc"]["ci"][1] for r in table) * 100 + 0.5) / 100)
     axes[0].set_ylabel("test accuracy (95% bootstrap CI, 5 seeds)")
-    axes[0].legend(title="init")
-    fig.suptitle("E3: optimizer x init x schedule", y=1.02)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, title="init", ncol=3, loc="upper right", bbox_to_anchor=(0.99, 1.08))
+    fig.suptitle("E3: optimizer x init x schedule (MNIST MLP, 1,000 steps)", y=1.04, x=0.35)
     return common.save(fig, "e3_optim_grid.png")
 
 
