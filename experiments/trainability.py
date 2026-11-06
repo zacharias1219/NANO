@@ -317,7 +317,7 @@ def make_figures(table, seeds, auc, tau) -> list[str]:
             if i == 2:
                 ax.set_xlabel("layer position (input = 0, output = 1)")
             if j == 0:
-                ax.set_ylabel("log10 ||dL/dW|| at step 0")
+                ax.set_ylabel("log10 ||dL/dW||, step 0 (floor -30)")
     axes[0, 2].legend(title="depth", fontsize=8, ncol=2)
     fig.suptitle("E2 per-layer gradient norms at initialisation (geometric mean over seeds)")
     fig.tight_layout()

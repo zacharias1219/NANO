@@ -238,7 +238,9 @@ def e2() -> str:
                   f(x["r_mean"]), f(x["final_loss_median"])] for x in t["failures"]]
     causes = ", ".join(f"{k}: {v}" for k, v in sorted(t["failure_cause_totals"].items(), key=lambda kv: -kv[1]))
     held = m.get("h1_heldout_balanced_accuracy", {})
-    interp = INTERPRETATION.get(verdict, "")
+    vals = {"auc": ci(m["auc_absr_predicts_failure"]), "bacc": ci(held),
+            "x1": ci(m.get("exploratory_X1_auc_neg_log_first_grad")), "x2": ci(m.get("exploratory_X2_auc_forward_attenuation"))}
+    interp = INTERPRETATION.get(verdict, "").format(**vals)
     return f"""## 4. E2: trainability, pre-registered
 
 **Question.** At what depth does each (activation, init) pair stop training, and does the
@@ -262,6 +264,8 @@ Deviations are logged in [DEVIATIONS.md](../docs/DEVIATIONS.md). {E['n_runs']} r
 | Held-out accuracy of "fail iff \\|r\\| > τ" (seeds 3-4, n = {held.get('n')}) | {ci(m.get('h1_heldout_accuracy'))} |
 | Held-out balanced accuracy (seeds 3-4) | {ci(held)} |
 | Fraction of (cell, seed) runs that train | {ci(m['fraction_runs_train'])} |
+| *Exploratory X1:* AUC of −log10 ‖∂L/∂W_first‖ | {ci(m.get('exploratory_X1_auc_neg_log_first_grad'))} |
+| *Exploratory X2:* AUC of forward attenuation \\|log10(std h_D / std h_1)\\| | {ci(m.get('exploratory_X2_auc_forward_attenuation'))} |
 
 Decision rule: confirmed if the AUC CI lower bound is ≥ 0.75 and held-out balanced accuracy
 ≥ 0.80; partially confirmed if the AUC CI lower bound is > 0.5; null otherwise.
@@ -318,6 +322,8 @@ standard learning rate fixed in advance (SGD 0.1; momentum/Nesterov 0.01 with μ
 Only differences whose paired 95% CIs (run-level and seed-clustered) both exclude zero are claimed.
 
 **What actually mattered.** {mattered}.
+
+{INTERPRETATION.get('e3', '')}
 
 {fig(E['figures'][0], 'E3 grid')}
 
