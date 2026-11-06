@@ -13,3 +13,4 @@ results/raw/
 report/_site/
 report/.quarto/
 .DS_Store
+report/site/

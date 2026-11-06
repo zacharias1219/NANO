@@ -92,7 +92,8 @@ print(format_report(*layerwise_report(loss)))
 | `tests/` | per-module tests against finite differences and PyTorch, property tests over random broadcast patterns, isolation and size checks |
 | `experiments/` | E1 parity · E2 trainability · E3 optimizer grid · E4 bug hunt · E5 speed · E6 FD error · failure gallery |
 | `report/` | `REPORT.md` (generated), `results.json`, figures, [derivations](report/derivations/DERIVATIONS.md) |
-| `machine/` | the Backprop Machine: an interactive see-through picture of the tape whose pipe widths are E2's real gradient norms (`make machine`, then open `/machine/`) |
+| `report/build_page.py` | builds the results website (`make page` → `report/site/`): the results page, the Backprop Machine and typeset derivations, all from `results.json` |
+| `machine/` | the Backprop Machine: an interactive see-through picture of the tape whose pipe widths are E2's real gradient norms, plus an im2col station for the CNN (`make machine`, then open `/machine/`) |
 | `docs/` | pre-registration, deviations log, decision log |
 
 ## Verification ladder

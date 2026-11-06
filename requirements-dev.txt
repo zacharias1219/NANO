@@ -6,3 +6,4 @@ matplotlib>=3.9
 jsonschema>=4.20
 ruff>=0.6
 scipy>=1.13
+markdown>=3.5

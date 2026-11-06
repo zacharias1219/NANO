@@ -28,7 +28,8 @@ evalkit/       shared infra: bootstrap CIs, AUC/Spearman, results.json schema + 
 tests/         pytest; PyTorch is the oracle here
 experiments/   E1 parity, E2 trainability, E3 optim grid, E4 bughunt, E5 speed, E6 fd_error, failures
 results/       one JSON fragment per experiment (committed); results/raw/ is scratch (ignored)
-report/        results.json (merged), REPORT.md (generated), figures/, derivations/
+report/        results.json (merged), REPORT.md (generated), figures/, derivations/,
+               build_page.py -> site/ (published results page; generated, not committed)
 docs/          PREREGISTRATION_E2.md, DEVIATIONS.md, DECISIONS.md
 machine/       v1.1 Backprop Machine (static page; reads report/results.json only)
 ```
@@ -44,6 +45,7 @@ make parity       # E1 (A3, A4)
 make e4           # bug hunt (A7)
 make repro        # everything from a clean clone (hours: E2 is the long pole)
 make repro QUICK=1  # minutes; numbers are NOT the published ones
+make page         # build the results website in report/site/
 ```
 
 Always run `make lint loc test-fast` before committing.
