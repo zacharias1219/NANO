@@ -1,0 +1,47 @@
+{
+ "id": "REPRO",
+ "clone_commit": "634f287fd449bf339f15d1739754ddeab23745fa",
+ "cache_created_after_clone": true,
+ "n_cached_runs": 1035,
+ "make_repro_succeeded": true,
+ "clone_acceptance": {
+  "A1": true,
+  "A2": true,
+  "A3": true,
+  "A4": true,
+  "A5": true,
+  "A6": true,
+  "A7": true,
+  "A8": true,
+  "A9": true,
+  "A10": null
+ },
+ "clone_A10": {
+  "fragments_present": [
+   "E1",
+   "E2",
+   "E3",
+   "E4",
+   "E5",
+   "E6",
+   "FAILURES"
+  ],
+  "ran_under_make_repro": true,
+  "from_clean_clone": false
+ },
+ "deterministic_results_identical": true,
+ "compared": {
+  "E2": {
+   "identical": true,
+   "differences": {}
+  },
+  "E3": {
+   "identical": true,
+   "differences": {}
+  },
+  "E4": {
+   "identical": true,
+   "differences": {}
+  }
+ }
+}

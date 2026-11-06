@@ -9,9 +9,11 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NANO_QUICK=$(QUICK)
 export NANO_JOBS=$(JOBS)
+# evaluated once at parse time (:=), i.e. before any experiment can create the cache
+RAW_PREEXISTING := $(shell test -d results/raw/e2 && echo 1 || echo 0)
 
 .PHONY: help install data test test-fast lint loc parity e1 e2 e2-pilot e3 e4 e5 e6 failures experiments \
-        collect figures report repro repro-quick machine clean
+        collect figures report page repro repro-quick machine clean
 
 help:  ## list targets
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
@@ -67,6 +69,11 @@ report:  ## render the report from report/results.json (Quarto HTML if installed
 	$(PY) report/build.py
 	@command -v quarto >/dev/null && quarto render report || echo "quarto not installed: report/REPORT.md is the rendered report"
 
+page:  ## build the published results site (report/site/) from report/results.json
+	$(PY) report/build_page.py
+
+repro: export NANO_REPRO=1
+repro: export NANO_RAW_PREEXISTING=$(RAW_PREEXISTING)
 repro: data test experiments collect report  ## everything, from a clean clone
 	@echo "make repro: done. See report/REPORT.md and report/results.json"
 
