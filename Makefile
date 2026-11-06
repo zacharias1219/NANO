@@ -67,6 +67,7 @@ report:  ## render the report from report/results.json (Quarto HTML if installed
 	$(PY) report/build.py
 	@command -v quarto >/dev/null && quarto render report || echo "quarto not installed: report/REPORT.md is the rendered report"
 
+repro: export NANO_REPRO=1
 repro: data test experiments collect report  ## everything, from a clean clone
 	@echo "make repro: done. See report/REPORT.md and report/results.json"
 

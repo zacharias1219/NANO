@@ -38,8 +38,8 @@ def make(name, params, kw, torch_side):
     return pair[0 if torch_side else 1](params, **kw)
 
 
-@pytest.mark.parametrize("name,kw", CONFIGS, ids=[c[0] for c in CONFIGS])
-def test_optimizer_matches_torch(name, kw):
+def optimizer_max_diff(name, kw) -> float:
+    """Worst per-step |w_nano - w_torch| over STEPS steps (also reported by experiments/collect.py)."""
     rng = np.random.default_rng(0)
     w0 = [rng.standard_normal((4, 3)), rng.standard_normal(3)]
     nano_p = [Tensor(w.copy(), requires_grad=True) for w in w0]
@@ -53,7 +53,13 @@ def test_optimizer_matches_torch(name, kw):
         o_n.step()
         o_t.step()
         worst = max(worst, *(np.max(np.abs(pn.data - pt.detach().numpy())) for pn, pt in zip(nano_p, torch_p)))
-        assert worst < A5_TOL, f"{name}: step {t} diff {worst:.3e}"
+    return float(worst)
+
+
+@pytest.mark.parametrize("name,kw", CONFIGS, ids=[c[0] for c in CONFIGS])
+def test_optimizer_matches_torch(name, kw):
+    worst = optimizer_max_diff(name, kw)
+    assert worst < A5_TOL, f"{name}: max per-step diff {worst:.3e}"
 
 
 def torch_schedule(kind, steps):

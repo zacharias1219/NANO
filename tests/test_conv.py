@@ -21,16 +21,20 @@ def run(fn, x, w, b, stride, pad, g):
     return out.data, tx.grad, tw.grad, tb.grad
 
 
-@pytest.mark.parametrize("geom", GEOMETRIES, ids=str)
-def test_im2col_matches_naive_loop(geom):
+def im2col_vs_naive(geom) -> float:
+    """Max abs difference over output, dx, dw, db (also reported by experiments/collect.py)."""
     n, c, h, w_, oc, k, s, p = geom
     rng = np.random.default_rng(sum(geom))
     x, w, b = rng.standard_normal((n, c, h, w_)), rng.standard_normal((oc, c, k, k)), rng.standard_normal(oc)
     oh, ow = (h + 2 * p - k) // s + 1, (w_ + 2 * p - k) // s + 1
     g = rng.standard_normal((n, oc, oh, ow))
     fast, slow = run(conv2d, x, w, b, s, p, g), run(conv2d_naive, x, w, b, s, p, g)
-    for a, r in zip(fast, slow):
-        assert np.max(np.abs(a - r)) < A6_TOL
+    return float(max(np.max(np.abs(a - r)) for a, r in zip(fast, slow)))
+
+
+@pytest.mark.parametrize("geom", GEOMETRIES, ids=str)
+def test_im2col_matches_naive_loop(geom):
+    assert im2col_vs_naive(geom) < A6_TOL
 
 
 @pytest.mark.parametrize("geom", GEOMETRIES, ids=str)
