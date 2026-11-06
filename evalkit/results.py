@@ -112,7 +112,7 @@ def write_fragment(exp_id: str, payload: dict, out_dir: str | Path = "results") 
     """Write ``results/<exp_id>.json`` with environment and git provenance attached."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    doc = {"id": exp_id, "generated_at": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
+    doc = {"id": exp_id, "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "environment": env_info(), "git": git_info(), **payload}
     path = out_dir / f"{exp_id}.json"
     path.write_text(json.dumps(_clean(doc), indent=1, sort_keys=False) + "\n")
@@ -129,7 +129,7 @@ def collect(fragment_dir="results", out_path="report/results.json", acceptance: 
     doc = {
         "schema_version": SCHEMA_VERSION,
         "project": project,
-        "generated_at": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
+        "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "git": git_info(),
         "environment": env_info(),
         "acceptance": acceptance or {},
