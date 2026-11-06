@@ -20,6 +20,7 @@ from nano.gradcheck import H_DEFAULT, numerical_grad, rel_error
 
 OPS = ["exp", "tanh", "sigmoid", "log", "matmul", "logsumexp", "softmax_cross_entropy", "conv2d"]
 GRID = {"float64": np.logspace(-1, -13, 25), "float32": np.logspace(-0.5, -7, 14)}
+LINEAR = {"matmul", "conv2d"}
 EPS = {"float64": np.finfo(np.float64).eps, "float32": np.finfo(np.float32).eps}
 
 
@@ -51,8 +52,11 @@ def main():
             table[c.name][dname] = {"h": GRID[dname].tolist(), "rel_err": errs,
                                     "best_h": float(GRID[dname][best]), "best_err": float(errs[best])}
             print(f"  {c.name:22s} {dname}: best h {GRID[dname][best]:.1e}  err {errs[best]:.1e}", flush=True)
-    best64 = np.array([table[o]["float64"]["best_h"] for o in table])
-    best32 = np.array([table[o]["float32"]["best_h"] for o in table])
+    # linear ops (matmul, conv2d) have no truncation error, so their best h is just the largest h in the grid:
+    # the geometric mean that is compared with theory uses the nonlinear ops only
+    nonlinear = [o for o in table if o not in LINEAR]
+    best64 = np.array([table[o]["float64"]["best_h"] for o in nonlinear])
+    best32 = np.array([table[o]["float32"]["best_h"] for o in nonlinear])
     at_default = [float(np.interp(np.log10(H_DEFAULT), np.log10(table[o]["float64"]["h"][::-1]),
                                   table[o]["float64"]["rel_err"][::-1])) for o in table]
     fig = figure(table)
@@ -60,8 +64,10 @@ def main():
         "title": "E6 finite-difference error vs step size h",
         "config": {"ops": OPS, "grid": {k: v.tolist() for k, v in GRID.items()}, "reference": "float64 analytic VJP"},
         "metrics": {
-            "best_h_float64_geomean": evalkit.metric(float(10 ** np.mean(np.log10(best64))), n=len(best64)),
-            "best_h_float32_geomean": evalkit.metric(float(10 ** np.mean(np.log10(best32))), n=len(best32)),
+            "best_h_float64_geomean": evalkit.metric(float(10 ** np.mean(np.log10(best64))), n=len(best64),
+                                                     method="geometric mean over nonlinear ops"),
+            "best_h_float32_geomean": evalkit.metric(float(10 ** np.mean(np.log10(best32))), n=len(best32),
+                                                     method="geometric mean over nonlinear ops"),
             "theory_h_float64": evalkit.metric(float((3 * EPS["float64"]) ** (1 / 3)), method="(3 eps)^(1/3)"),
             "theory_h_float32": evalkit.metric(float((3 * EPS["float32"]) ** (1 / 3)), method="(3 eps)^(1/3)"),
             "max_err_at_default_h": evalkit.metric(max(at_default), n=len(at_default), method=f"h = {H_DEFAULT:g}"),

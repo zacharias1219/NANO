@@ -9,8 +9,8 @@ format:
 
 # Nano: a NumPy neural engine, verified and then broken on purpose
 
-*Project 1A. Generated from [`results.json`](results.json) (schema 1.0, commit `e021997a98`,
-2026-11-06T10:09:59+00:00). Hardware: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 cores, 15.7 GB RAM, Linux 6.18.44-fc-v242;
+*Project 1A. Generated from [`results.json`](results.json) (schema 1.0, commit `634f287fd4`,
+2026-11-06T10:12:04+00:00). Hardware: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 cores, 15.7 GB RAM, Linux 6.18.44-fc-v242;
 Python 3.13.18, NumPy 2.5.3 (scipy-openblas 0.3.34.106.0), PyTorch 2.15.0 (oracle only).*
 
 ## Acceptance criteria
@@ -72,8 +72,8 @@ that is the drift a float32 "matches PyTorch" claim has to live with, shown rath
 | Setup | f64: 1-step param diff | f64: max loss diff (300 steps) | f32: 1-step param diff | f32: max loss diff | Nano f32 vs Nano f64 | test acc. after run (f64) |
 |---|---|---|---|---|---|---|
 | mlp mnist | 5.55e-17 | 1.18e-12 | 2.98e-8 | 0.0982 | 0.0335 | 93.6% |
-| cnn mnist | 1.11e-16 | 7.11e-15 | 7.45e-8 | 3.81e-6 | 1.60e-6 | 11.3% |
-| cnn fashion | 1.11e-16 | 3.36e-14 | 1.19e-7 | 0.0567 | 0.0557 | 77.7% |
+| cnn mnist | 1.11e-16 | 1.78e-15 | 2.98e-8 | 1.43e-6 | 0.0028 | 95.0% |
+| cnn fashion | 1.11e-16 | 3.55e-15 | 1.19e-7 | 0.00563 | 0.00599 | 83.5% |
 
 ![float32 drift](figures/e1_float32_drift.png)
 
@@ -131,7 +131,7 @@ section 2 lists each op's max error.
 correct, so the model still trains. A whole-model gradcheck notices *that* something is
 wrong (large relative error) but not *where*. The layerwise checker re-runs every tape node's
 op in isolation against finite differences, in forward order, and names the first one that
-disagrees. Result: **5.00 of 5 located**; the bug-free control passes
+disagrees. Result: **5 of 5 located**; the bug-free control passes
 every op.
 
 | Bug | Injected defect | Expected | Checker names | Whole-model rel. err | Located |
@@ -170,8 +170,8 @@ first bad op: conv2d in Sequential/3:Conv2d
 **Finite-difference error vs step size (E6).** Central differences trade truncation error
 (∝ h²) against rounding error (∝ ε/h), giving a U-curve with its minimum near
 h* = (3ε)^(1/3) (derivation D11). Measured best h, geometric mean over ops:
-1.15e-4 in float64 (theory 8.73e-6)
-and 0.0205 in float32 (theory 0.0071).
+1.21e-5 in float64 (theory 8.73e-6)
+and 0.00825 in float32 (theory 0.0071).
 At the gradcheck step h = 1e-6 the worst op error is 1.17e-9, inside the A1
 bound of 1e-7. Linear ops (matmul, conv) have no truncation term, so their curves only rise.
 In float32 no step size certifies a gradient to better than about 1e-5, which is why the
@@ -282,7 +282,7 @@ configuration, test accuracy on 2,000 held-out images. Each optimizer uses one
 standard learning rate fixed in advance (SGD 0.1; momentum/Nesterov 0.01 with μ = 0.9; Adam/AdamW 1e-3).
 Only differences whose paired 95% CIs (run-level and seed-clustered) both exclude zero are claimed.
 
-**What actually mattered.** small vs he (init): -2.05 points; warmup_cosine vs constant (schedule): -0.91 points; cosine vs constant (schedule): -0.902 points; adamw vs sgd (optimizer): 0.811 points; adam vs sgd (optimizer): 0.791 points; momentum vs sgd (optimizer): -0.257 points; nesterov vs sgd (optimizer): -0.256 points.
+**What actually mattered.** small vs he (init): -2.05 points; warmup_cosine vs constant (schedule): -0.91 points; cosine vs constant (schedule): -0.90 points; adamw vs sgd (optimizer): +0.81 points; adam vs sgd (optimizer): +0.79 points; momentum vs sgd (optimizer): -0.26 points; nesterov vs sgd (optimizer): -0.26 points.
 
 **Reading E3.** The ranking is dominated by initialisation: small init costs the most and interacts with the schedule. With small init the network starts slowly, and a cosine schedule lowers the learning rate before it has recovered, so the cosine penalty is concentrated in the small-init bars. Adam and AdamW beat SGD at this budget; momentum and Nesterov at learning rate 0.01 (effective step 0.1) slightly trail plain SGD at 0.1. Xavier and He are not separated once seeds are treated as the unit of replication. All of this is specific to a short 1,000-step budget and one fixed learning rate per optimizer.
 
@@ -292,14 +292,14 @@ Paired contrasts (each run paired with the reference-level run that shares its s
 
 | Factor | Contrast | Δ test acc. [95% CI, run pairs] | [95% CI, seed-clustered] | sign-flip p (5 seeds) | Separated |
 |---|---|---|---|---|---|
-| optimizer | momentum − sgd | -0.0025667 [-0.0034111, -0.0016778] | -0.0025667 [-0.0034889, -0.0015556] | 0.0625 | **yes** |
-| optimizer | nesterov − sgd | -0.0025556 [-0.0036111, -0.0014556] | -0.0025556 [-0.0038111, -0.0013] | 0.0625 | **yes** |
-| optimizer | adam − sgd | 0.0079111 [0.0056222, 0.010278] | 0.0079111 [0.0060111, 0.0098222] | 0.0625 | **yes** |
-| optimizer | adamw − sgd | 0.0081111 [0.0058, 0.010522] | 0.0081111 [0.0063333, 0.0098333] | 0.0625 | **yes** |
-| init | small − he | -0.020473 [-0.023247, -0.017767] | -0.020473 [-0.022153, -0.018713] | 0.0625 | **yes** |
-| init | xavier − he | 0.0010133 [2.6000e-4, 0.0017333] | 0.0010133 [-2.6667e-4, 0.0024133] | 0.5 | no |
-| schedule | cosine − constant | -0.00902 [-0.011427, -0.00682] | -0.00902 [-0.0094533, -0.0085867] | 0.0625 | **yes** |
-| schedule | warmup_cosine − constant | -0.0091 [-0.01144, -0.0069533] | -0.0091 [-0.00962, -0.0085667] | 0.0625 | **yes** |
+| optimizer | momentum − sgd | -0.26 pp [-0.34, -0.17] | -0.26 pp [-0.35, -0.16] | 0.0625 | **yes** |
+| optimizer | nesterov − sgd | -0.26 pp [-0.36, -0.15] | -0.26 pp [-0.38, -0.13] | 0.0625 | **yes** |
+| optimizer | adam − sgd | +0.79 pp [+0.56, +1.03] | +0.79 pp [+0.60, +0.98] | 0.0625 | **yes** |
+| optimizer | adamw − sgd | +0.81 pp [+0.58, +1.05] | +0.81 pp [+0.63, +0.98] | 0.0625 | **yes** |
+| init | small − he | -2.05 pp [-2.32, -1.78] | -2.05 pp [-2.22, -1.87] | 0.0625 | **yes** |
+| init | xavier − he | +0.10 pp [+0.03, +0.17] | +0.10 pp [-0.03, +0.24] | 0.5 | no |
+| schedule | cosine − constant | -0.90 pp [-1.14, -0.68] | -0.90 pp [-0.95, -0.86] | 0.0625 | **yes** |
+| schedule | warmup_cosine − constant | -0.91 pp [-1.14, -0.70] | -0.91 pp [-0.96, -0.86] | 0.0625 | **yes** |
 
 A contrast is claimed only when both CIs exclude zero. With five seeds the exact sign-flip test
 cannot go below p = 0.0625, so it is shown for transparency rather than used as the gate.
@@ -308,51 +308,51 @@ cannot go below p = 0.0625, so it is shown for transparency rather than used as 
 
 | Optimizer | Init | Schedule | Test acc. [95% CI] | Steps to EMA loss ≤ 0.3, median [IQR] | Runs never reaching it |
 |---|---|---|---|---|---|
-| adam | xavier | constant | 0.9549 [0.9529, 0.9572] | 83.00 [81.00, 86.00] | 0 |
-| adamw | xavier | constant | 0.9535 [0.9503, 0.9563] | 83.00 [81.00, 86.00] | 0 |
-| adam | he | constant | 0.9532 [0.9492, 0.9569] | 82.00 [82.00, 86.00] | 0 |
-| adamw | he | constant | 0.9527 [0.9506, 0.9547] | 82.00 [81.00, 86.00] | 0 |
-| adamw | xavier | warmup_cosine | 0.952 [0.9493, 0.9546] | 94.00 [92.00, 100.00] | 0 |
-| adamw | xavier | cosine | 0.9519 [0.9503, 0.9535] | 83.00 [81.00, 86.00] | 0 |
-| adam | xavier | warmup_cosine | 0.9515 [0.9493, 0.9539] | 94.00 [92.00, 100.00] | 0 |
-| adam | xavier | cosine | 0.9504 [0.9479, 0.9529] | 83.00 [82.00, 86.00] | 0 |
-| nesterov | xavier | constant | 0.9501 [0.948, 0.9525] | 90.00 [88.00, 96.00] | 0 |
-| adam | he | cosine | 0.9501 [0.9478, 0.9529] | 82.00 [81.00, 86.00] | 0 |
-| adamw | he | cosine | 0.9497 [0.9467, 0.9524] | 83.00 [81.00, 86.00] | 0 |
-| adamw | he | warmup_cosine | 0.9494 [0.9461, 0.9533] | 93.00 [93.00, 97.00] | 0 |
-| sgd | xavier | constant | 0.9494 [0.9473, 0.9525] | 94.00 [90.00, 95.00] | 0 |
-| momentum | xavier | constant | 0.9488 [0.9473, 0.9507] | 94.00 [92.00, 97.00] | 0 |
-| sgd | he | constant | 0.9487 [0.9458, 0.9512] | 84.00 [84.00, 87.00] | 0 |
-| adam | he | warmup_cosine | 0.9482 [0.9453, 0.952] | 93.00 [93.00, 97.00] | 0 |
-| nesterov | he | constant | 0.9476 [0.9448, 0.9504] | 84.00 [83.00, 88.00] | 0 |
-| sgd | he | cosine | 0.9475 [0.9447, 0.9504] | 84.00 [84.00, 87.00] | 0 |
-| momentum | he | constant | 0.9474 [0.9446, 0.9496] | 88.00 [88.00, 91.00] | 0 |
-| sgd | he | warmup_cosine | 0.9468 [0.9443, 0.9494] | 104.00 [102.00, 105.00] | 0 |
-| nesterov | xavier | cosine | 0.9455 [0.9444, 0.9464] | 90.00 [88.00, 96.00] | 0 |
-| sgd | xavier | cosine | 0.9455 [0.9429, 0.9472] | 94.00 [90.00, 95.00] | 0 |
-| sgd | xavier | warmup_cosine | 0.9447 [0.9427, 0.946] | 129.00 [125.00, 134.00] | 0 |
-| momentum | he | warmup_cosine | 0.9446 [0.9429, 0.9461] | 94.00 [93.00, 99.00] | 0 |
-| momentum | xavier | cosine | 0.9445 [0.9425, 0.9463] | 94.00 [92.00, 97.00] | 0 |
-| nesterov | he | cosine | 0.9441 [0.9417, 0.9464] | 84.00 [83.00, 88.00] | 0 |
-| nesterov | xavier | warmup_cosine | 0.9441 [0.942, 0.9466] | 105.00 [104.00, 117.00] | 0 |
-| momentum | xavier | warmup_cosine | 0.9439 [0.9421, 0.945] | 117.00 [109.00, 124.00] | 0 |
-| momentum | he | cosine | 0.9437 [0.9402, 0.9465] | 88.00 [88.00, 91.00] | 0 |
-| adamw | small | constant | 0.9433 [0.9419, 0.9452] | 191.00 [188.00, 198.00] | 0 |
-| adam | small | constant | 0.9432 [0.9405, 0.9458] | 191.00 [188.00, 198.00] | 0 |
-| nesterov | he | warmup_cosine | 0.9418 [0.9397, 0.9444] | 91.00 [91.00, 96.00] | 0 |
-| sgd | small | constant | 0.9395 [0.9378, 0.9412] | 398.00 [380.00, 401.00] | 0 |
-| nesterov | small | constant | 0.9388 [0.9375, 0.9403] | 436.00 [421.00, 454.00] | 0 |
-| momentum | small | constant | 0.9377 [0.9362, 0.9392] | 460.00 [436.00, 466.00] | 0 |
-| adamw | small | warmup_cosine | 0.9367 [0.9348, 0.938] | 222.00 [216.00, 223.00] | 0 |
-| adam | small | warmup_cosine | 0.9362 [0.9348, 0.9373] | 222.00 [216.00, 223.00] | 0 |
-| adamw | small | cosine | 0.9351 [0.9333, 0.9368] | 199.00 [194.00, 200.00] | 0 |
-| adam | small | cosine | 0.9348 [0.9333, 0.9363] | 199.00 [194.00, 200.00] | 0 |
-| sgd | small | warmup_cosine | 0.9148 [0.9136, 0.916] | 439.00 [421.00, 461.00] | 0 |
-| sgd | small | cosine | 0.9144 [0.9132, 0.9156] | 436.00 [420.00, 460.00] | 0 |
-| momentum | small | warmup_cosine | 0.9091 [0.9065, 0.9117] | 510.00 [485.00, 511.00] | 0 |
-| momentum | small | cosine | 0.9085 [0.906, 0.911] | 510.00 [485.00, 511.00] | 0 |
-| nesterov | small | warmup_cosine | 0.9085 [0.906, 0.911] | 510.00 [485.00, 511.00] | 0 |
-| nesterov | small | cosine | 0.9078 [0.9054, 0.9102] | 498.00 [483.00, 510.00] | 0 |
+| adam | xavier | constant | 0.9549 [0.9529, 0.9572] | 83 [81, 86] | 0 |
+| adamw | xavier | constant | 0.9535 [0.9503, 0.9563] | 83 [81, 86] | 0 |
+| adam | he | constant | 0.9532 [0.9492, 0.9569] | 82 [82, 86] | 0 |
+| adamw | he | constant | 0.9527 [0.9506, 0.9547] | 82 [81, 86] | 0 |
+| adamw | xavier | warmup_cosine | 0.952 [0.9493, 0.9546] | 94 [92, 100] | 0 |
+| adamw | xavier | cosine | 0.9519 [0.9503, 0.9535] | 83 [81, 86] | 0 |
+| adam | xavier | warmup_cosine | 0.9515 [0.9493, 0.9539] | 94 [92, 100] | 0 |
+| adam | xavier | cosine | 0.9504 [0.9479, 0.9529] | 83 [82, 86] | 0 |
+| nesterov | xavier | constant | 0.9501 [0.948, 0.9525] | 90 [88, 96] | 0 |
+| adam | he | cosine | 0.9501 [0.9478, 0.9529] | 82 [81, 86] | 0 |
+| adamw | he | cosine | 0.9497 [0.9467, 0.9524] | 83 [81, 86] | 0 |
+| adamw | he | warmup_cosine | 0.9494 [0.9461, 0.9533] | 93 [93, 97] | 0 |
+| sgd | xavier | constant | 0.9494 [0.9473, 0.9525] | 94 [90, 95] | 0 |
+| momentum | xavier | constant | 0.9488 [0.9473, 0.9507] | 94 [92, 97] | 0 |
+| sgd | he | constant | 0.9487 [0.9458, 0.9512] | 84 [84, 87] | 0 |
+| adam | he | warmup_cosine | 0.9482 [0.9453, 0.952] | 93 [93, 97] | 0 |
+| nesterov | he | constant | 0.9476 [0.9448, 0.9504] | 84 [83, 88] | 0 |
+| sgd | he | cosine | 0.9475 [0.9447, 0.9504] | 84 [84, 87] | 0 |
+| momentum | he | constant | 0.9474 [0.9446, 0.9496] | 88 [88, 91] | 0 |
+| sgd | he | warmup_cosine | 0.9468 [0.9443, 0.9494] | 104 [102, 105] | 0 |
+| nesterov | xavier | cosine | 0.9455 [0.9444, 0.9464] | 90 [88, 96] | 0 |
+| sgd | xavier | cosine | 0.9455 [0.9429, 0.9472] | 94 [90, 95] | 0 |
+| sgd | xavier | warmup_cosine | 0.9447 [0.9427, 0.946] | 129 [125, 134] | 0 |
+| momentum | he | warmup_cosine | 0.9446 [0.9429, 0.9461] | 94 [93, 99] | 0 |
+| momentum | xavier | cosine | 0.9445 [0.9425, 0.9463] | 94 [92, 97] | 0 |
+| nesterov | he | cosine | 0.9441 [0.9417, 0.9464] | 84 [83, 88] | 0 |
+| nesterov | xavier | warmup_cosine | 0.9441 [0.942, 0.9466] | 105 [104, 117] | 0 |
+| momentum | xavier | warmup_cosine | 0.9439 [0.9421, 0.945] | 117 [109, 124] | 0 |
+| momentum | he | cosine | 0.9437 [0.9402, 0.9465] | 88 [88, 91] | 0 |
+| adamw | small | constant | 0.9433 [0.9419, 0.9452] | 191 [188, 198] | 0 |
+| adam | small | constant | 0.9432 [0.9405, 0.9458] | 191 [188, 198] | 0 |
+| nesterov | he | warmup_cosine | 0.9418 [0.9397, 0.9444] | 91 [91, 96] | 0 |
+| sgd | small | constant | 0.9395 [0.9378, 0.9412] | 398 [380, 401] | 0 |
+| nesterov | small | constant | 0.9388 [0.9375, 0.9403] | 436 [421, 454] | 0 |
+| momentum | small | constant | 0.9377 [0.9362, 0.9392] | 460 [436, 466] | 0 |
+| adamw | small | warmup_cosine | 0.9367 [0.9348, 0.938] | 222 [216, 223] | 0 |
+| adam | small | warmup_cosine | 0.9362 [0.9348, 0.9373] | 222 [216, 223] | 0 |
+| adamw | small | cosine | 0.9351 [0.9333, 0.9368] | 199 [194, 200] | 0 |
+| adam | small | cosine | 0.9348 [0.9333, 0.9363] | 199 [194, 200] | 0 |
+| sgd | small | warmup_cosine | 0.9148 [0.9136, 0.916] | 439 [421, 461] | 0 |
+| sgd | small | cosine | 0.9144 [0.9132, 0.9156] | 436 [420, 460] | 0 |
+| momentum | small | warmup_cosine | 0.9091 [0.9065, 0.9117] | 510 [485, 511] | 0 |
+| momentum | small | cosine | 0.9085 [0.906, 0.911] | 510 [485, 511] | 0 |
+| nesterov | small | warmup_cosine | 0.9085 [0.906, 0.911] | 510 [485, 511] | 0 |
+| nesterov | small | cosine | 0.9078 [0.9054, 0.9102] | 498 [483, 510] | 0 |
 
 </details>
 
@@ -387,13 +387,18 @@ The fused, max-shifted version stays finite at every scale tested (derivation D7
 **F3. Dead ReLUs at high learning rate.** A 4 × 128 ReLU MLP (He init), plain SGD, 400 steps.
 Fraction of units dead on 512 training images (worst layer), mean of 3 seeds [bootstrap CI]:
 
-| Learning rate | Dead fraction at end |
-|---|---|
-| 0.01 | 0.05208 [0.03906, 0.0625] |
-| 0.1 | 0.01562 [0.01562, 0.01562] |
-| 0.3 | 0.06641 [0.05469, 0.07812] |
-| 0.4 | 0.4844 [0.4844, 0.4844] |
-| 0.5 | n/a |
+| Learning rate | Dead fraction at end (surviving seeds) | Seeds whose loss became NaN |
+|---|---|---|
+| 0.01 | 0.05208 [0.03906, 0.0625] | 0/3 |
+| 0.1 | 0.01562 [0.01562, 0.01562] | 0/3 |
+| 0.3 | 0.06641 [0.05469, 0.07812] | 1/3 |
+| 0.4 | 0.4844 [0.4844, 0.4844] | 2/3 |
+| 0.5 | — | 3/3 |
+
+At lr 0.4 about half the units in the worst layer are permanently dead, yet the loss stays finite and the
+network keeps learning with what is left; one step further (0.5) every seed diverges within the first steps.
+The same failure appeared unplanned in E1, where a CNN at lr 0.05 with momentum lost every ReLU
+([DEVIATIONS.md](../docs/DEVIATIONS.md), D-07).
 
 ![dead ReLUs](figures/f3_dead_relus.png)
 

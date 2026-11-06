@@ -65,8 +65,8 @@ def make_cnn(rng):
 
 SETUPS = {  # name: (builder, dataset, flat, batch, lr)
     "mlp_mnist": (make_mlp, "mnist", True, 64, 0.05),
-    "cnn_mnist": (make_cnn, "mnist", False, 64, 0.05),
-    "cnn_fashion": (make_cnn, "fashion", False, 64, 0.05),
+    "cnn_mnist": (make_cnn, "mnist", False, 64, 0.01),  # 0.05 killed every ReLU (docs/DEVIATIONS.md D-07)
+    "cnn_fashion": (make_cnn, "fashion", False, 64, 0.01),
 }
 
 
@@ -145,7 +145,7 @@ def main():
     }
     evalkit.write_fragment("E1", {
         "title": "E1 parity vs PyTorch: per op, per step, per run; float64 and float32",
-        "config": {"run_steps": RUN_STEPS, "optimizer": "SGD momentum 0.9", "seed": SEED, "torch_threads": 1,
+        "config": {"run_steps": RUN_STEPS, "optimizer": "SGD momentum 0.9 (lr per setup below)", "seed": SEED, "torch_threads": 1,
                    "setups": {k: {"dataset": v[1], "batch": v[3], "lr": v[4]} for k, v in SETUPS.items()}},
         "metrics": metrics, "tables": {"ops": ops, "runs": runs}, "figures": figures,
         "runtime_s": time.perf_counter() - t0,

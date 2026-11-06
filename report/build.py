@@ -27,6 +27,8 @@ def f(x, digits: int = 2) -> str:
         return f"{x:,}"
     if x == 0:
         return "0"
+    if math.isfinite(x) and float(x).is_integer() and 1 <= abs(x) < 1e5:
+        return f"{int(x):,}"
     if not math.isfinite(x):
         return "∞" if x > 0 else ("-∞" if x < 0 else "NaN")
     if abs(x) < 1e-3 or abs(x) >= 1e5:
@@ -40,6 +42,14 @@ def ci(m: dict, digits: int = 3) -> str:
     c = m.get("ci")
     s = f(m["value"], digits)
     return f"{s} [{f(c[0], digits)}, {f(c[1], digits)}]" if c else s
+
+
+def ci_pp(m: dict) -> str:
+    """A difference in accuracy, shown in percentage points."""
+    if not m or m.get("value") is None:
+        return "n/a"
+    lo, hi = m["ci"]
+    return f"{100 * m['value']:+.2f} pp [{100 * lo:+.2f}, {100 * hi:+.2f}]"
 
 
 def pct(x) -> str:
@@ -190,7 +200,7 @@ section 2 lists each op's max error.
 correct, so the model still trains. A whole-model gradcheck notices *that* something is
 wrong (large relative error) but not *where*. The layerwise checker re-runs every tape node's
 op in isolation against finite differences, in forward order, and names the first one that
-disagrees. Result: **{f(get('E4', 'metrics', 'bugs_located', 'value'))} of 5 located**; the bug-free control passes
+disagrees. Result: **{int(get('E4', 'metrics', 'bugs_located', 'value'))} of 5 located**; the bug-free control passes
 every op.
 
 {table(["Bug", "Injected defect", "Expected", "Checker names", "Whole-model rel. err", "Located"], rows)}
@@ -308,11 +318,11 @@ def e3() -> str:
     rows = [[r["optimizer"], r["init"], r["schedule"], ci(r["test_acc"]),
              f"{f(r['steps_to_target']['value'])} [{f(r['steps_to_target']['iqr'][0])}, {f(r['steps_to_target']['iqr'][1])}]",
              r["n_censored"]] for r in sorted(t["configs"], key=lambda r: -r["test_acc"]["value"])]
-    con = [[c["factor"], f"{c['level']} − {c['reference']}", ci(c["acc_diff"], 4),
-            ci(c.get("acc_diff_seed_cluster"), 4), f(c.get("p_sign_flip_seed_level")),
+    con = [[c["factor"], f"{c['level']} − {c['reference']}", ci_pp(c["acc_diff"]),
+            ci_pp(c.get("acc_diff_seed_cluster")), f(c.get("p_sign_flip_seed_level")),
             "**yes**" if c["separated"] else "no"] for c in t["contrasts"]]
     sep = [c for c in t["contrasts"] if c["separated"]]
-    mattered = "; ".join(f"{c['level']} vs {c['reference']} ({c['factor']}): {f(c['acc_diff']['value'] * 100, 2)} points"
+    mattered = "; ".join(f"{c['level']} vs {c['reference']} ({c['factor']}): {100 * c['acc_diff']['value']:+.2f} points"
                          for c in sorted(sep, key=lambda c: -abs(c["acc_diff"]["value"]))) or "no contrast was separated"
     return f"""## 5. Optimizers, inits and schedules (E3)
 
@@ -348,7 +358,8 @@ def failures() -> str:
     F = X.get("FAILURES", {})
     t = F.get("tables", {})
     f2, f3, f4 = t.get("F2", {}), t.get("F3", {}), t.get("F4", {})
-    f3rows = [[lr, ci(r["dead_final"])] for lr, r in f3.get("results", {}).items()]
+    f3rows = [[lr, ci(r["dead_final"]) if r["dead_final"].get("value") is not None else "—",
+               f"{r.get('diverged_seeds', 0)}/3"] for lr, r in f3.get("results", {}).items()]
     return f"""## 8. Failure gallery
 
 Every way the engine and the networks go wrong, measured.
@@ -366,7 +377,12 @@ The fused, max-shifted version stays finite at every scale tested (derivation D7
 **F3. Dead ReLUs at high learning rate.** A 4 × 128 ReLU MLP (He init), plain SGD, {f3.get('steps')} steps.
 Fraction of units dead on 512 training images (worst layer), mean of 3 seeds [bootstrap CI]:
 
-{table(["Learning rate", "Dead fraction at end"], f3rows)}
+{table(["Learning rate", "Dead fraction at end (surviving seeds)", "Seeds whose loss became NaN"], f3rows)}
+
+At lr 0.4 about half the units in the worst layer are permanently dead, yet the loss stays finite and the
+network keeps learning with what is left; one step further (0.5) every seed diverges within the first steps.
+The same failure appeared unplanned in E1, where a CNN at lr 0.05 with momentum lost every ReLU
+([DEVIATIONS.md](../docs/DEVIATIONS.md), D-07).
 
 {fig('figures/f3_dead_relus.png', 'dead ReLUs')}
 

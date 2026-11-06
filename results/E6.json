@@ -1,6 +1,6 @@
 {
  "id": "E6",
- "generated_at": "2026-11-06T10:08:56+00:00",
+ "generated_at": "2026-11-06T10:11:46+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -19,7 +19,7 @@
   "argv": "/home/user/NANO/experiments/fd_error.py"
  },
  "git": {
-  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
+  "commit": "634f287fd449bf339f15d1739754ddeab23745fa",
   "dirty": true
  },
  "title": "E6 finite-difference error vs step size h",
@@ -83,18 +83,18 @@
  },
  "metrics": {
   "best_h_float64_geomean": {
-   "value": 0.00011547819846894582,
+   "value": 1.2115276586285876e-05,
    "ci": null,
-   "n": 8,
+   "n": 6,
    "unit": null,
-   "method": null
+   "method": "geometric mean over nonlinear ops"
   },
   "best_h_float32_geomean": {
-   "value": 0.02053525026457146,
+   "value": 0.008254041852680182,
    "ci": null,
-   "n": 8,
+   "n": 6,
    "unit": null,
-   "method": null
+   "method": "geometric mean over nonlinear ops"
   },
   "theory_h_float64": {
    "value": 8.733476581980381e-06,
@@ -893,5 +893,5 @@
  "figures": [
   "figures/e6_fd_error.png"
  ],
- "runtime_s": 3.1893590720001157
+ "runtime_s": 3.3710086949995457
 }
