@@ -1,6 +1,6 @@
 {
  "id": "E1",
- "generated_at": "2026-11-06T08:50:30+00:00",
+ "generated_at": "2026-11-06T10:08:27+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -19,8 +19,8 @@
   "argv": "/home/user/NANO/experiments/parity.py"
  },
  "git": {
-  "commit": "fa3be54e3864c79eef7e80f0abce3154d1f81bef",
-  "dirty": true
+  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
+  "dirty": false
  },
  "title": "E1 parity vs PyTorch: per op, per step, per run; float64 and float32",
  "config": {
@@ -454,7 +454,7 @@
   "figures/e1_float32_drift.png",
   "figures/e1_op_errors.png"
  ],
- "runtime_s": 39.11205586599999,
+ "runtime_s": 39.15063111000018,
  "notes": [
   "Error metric: max|a-b| / max(max|a|, max|b|) per tensor (PRECISION.md).",
   "float32 parity is expected to drift and is reported, not hidden."

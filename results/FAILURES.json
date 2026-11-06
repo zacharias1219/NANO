@@ -1,6 +1,6 @@
 {
  "id": "FAILURES",
- "generated_at": "2026-11-06T08:53:23+00:00",
+ "generated_at": "2026-11-06T10:09:20+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -19,7 +19,7 @@
   "argv": "/home/user/NANO/experiments/failures.py"
  },
  "git": {
-  "commit": "fa3be54e3864c79eef7e80f0abce3154d1f81bef",
+  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
   "dirty": true
  },
  "title": "Failure gallery: overflow, dead ReLUs, the SGD stability bound, FD blind spots",
@@ -932,7 +932,7 @@
   "figures/f4_sgd_divergence.png",
   "figures/f5_fd_kinks.png"
  ],
- "runtime_s": 22.34671708299993,
+ "runtime_s": 22.680622473000767,
  "notes": [
   "F1 (float32 drift) is figure e1_float32_drift.png; F6 (failing E2 cells) is in E2."
  ]

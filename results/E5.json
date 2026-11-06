@@ -1,0 +1,209 @@
+{
+ "id": "E5",
+ "generated_at": "2026-11-06T10:08:53+00:00",
+ "environment": {
+  "python": "3.13.18",
+  "numpy": "2.5.3",
+  "blas": "scipy-openblas 0.3.34.106.0",
+  "torch": "2.15.0",
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "cores": 4,
+  "ram_gb": 15.7,
+  "os": "Linux 6.18.44-fc-v242",
+  "machine": "x86_64",
+  "threads": {
+   "OMP_NUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1",
+   "MKL_NUM_THREADS": "1"
+  },
+  "argv": "/home/user/NANO/experiments/speed.py"
+ },
+ "git": {
+  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
+  "dirty": true
+ },
+ "title": "E5 cost and latency vs PyTorch CPU (single thread)",
+ "config": {
+  "repeats": 30,
+  "threads": 1,
+  "torch_threads": 1
+ },
+ "metrics": {
+  "mlp_slowdown_float64": {
+   "value": 1.4029132992191546,
+   "ci": null,
+   "n": null,
+   "unit": "x",
+   "method": "median time ratio"
+  },
+  "cnn_slowdown_float64": {
+   "value": 1.9837288856013682,
+   "ci": null,
+   "n": null,
+   "unit": "x",
+   "method": "median time ratio"
+  },
+  "mlp_step_ms_float64": {
+   "value": 2.277658500133839,
+   "iqr": [
+    2.2060524997868924,
+    2.3797630001354264
+   ],
+   "n": 30,
+   "method": "median and IQR"
+  },
+  "cnn_step_ms_float64": {
+   "value": 28.365380000650475,
+   "iqr": [
+    27.78080199936994,
+    29.00370825045684
+   ],
+   "n": 30,
+   "method": "median and IQR"
+  },
+  "im2col_speedup_over_naive": {
+   "value": 318.46926231941865,
+   "ci": null,
+   "n": null,
+   "unit": "x",
+   "method": null
+  }
+ },
+ "tables": {
+  "bench": [
+   {
+    "name": "MLP 784-128-128-10, B=128, float64",
+    "nano_ms": {
+     "value": 2.277658500133839,
+     "iqr": [
+      2.2060524997868924,
+      2.3797630001354264
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "torch_ms": {
+     "value": 1.623520499379083,
+     "iqr": [
+      1.478240499864114,
+      1.7886322493723128
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "slowdown": 1.4029132992191546,
+    "flops": 90636288,
+    "nano_gflops": 39.79362489797047,
+    "torch_gflops": 55.82700559350124,
+    "nano_peak_mb": 2.5720748901367188
+   },
+   {
+    "name": "CNN 2xconv, B=64, float64",
+    "nano_ms": {
+     "value": 28.365380000650475,
+     "iqr": [
+      27.78080199936994,
+      29.00370825045684
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "torch_ms": {
+     "value": 14.299020499493054,
+     "iqr": [
+      12.0347597496675,
+      15.0378430003002
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "slowdown": 1.9837288856013682,
+    "flops": 111390720,
+    "nano_gflops": 3.9269955134549788,
+    "torch_gflops": 7.790094433667618,
+    "nano_peak_mb": 34.58034420013428
+   },
+   {
+    "name": "MLP 784-128-128-10, B=128, float32",
+    "nano_ms": {
+     "value": 1.2791274998562585,
+     "iqr": [
+      1.2173259999599395,
+      1.4507814998978574
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "torch_ms": {
+     "value": 0.9322060004706145,
+     "iqr": [
+      0.8693844999925204,
+      1.0021650002727256
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "slowdown": 1.3721511116754281,
+    "flops": 90636288,
+    "nano_gflops": 70.85789963094783,
+    "torch_gflops": 97.227745749591,
+    "nano_peak_mb": 1.2900543212890625
+   },
+   {
+    "name": "CNN 2xconv, B=64, float32",
+    "nano_ms": {
+     "value": 17.711840500396647,
+     "iqr": [
+      17.02337625056316,
+      18.302108999705524
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "torch_ms": {
+     "value": 7.24527149941423,
+     "iqr": [
+      7.054370750211092,
+      7.498847750184723
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "slowdown": 2.4446068724724292,
+    "flops": 111390720,
+    "nano_gflops": 6.289053923984097,
+    "torch_gflops": 15.374264443921223,
+    "nano_peak_mb": 17.871024131774902
+   },
+   {
+    "name": "conv 4->8, 3x3, 14x14, B=8: naive loop vs im2col",
+    "nano_ms": {
+     "value": 111.98016199978156,
+     "iqr": [
+      111.05279900039022,
+      114.42510100005165
+     ],
+     "n": 5,
+     "method": "median and IQR"
+    },
+    "torch_ms": {
+     "value": 0.35161999994670623,
+     "iqr": [
+      0.32934725027189415,
+      0.36653000006481307
+     ],
+     "n": 30,
+     "method": "median and IQR"
+    },
+    "slowdown": 318.46926231941865,
+    "flops": 2709504,
+    "comparison": "naive (nano_ms) vs im2col (torch_ms column)"
+   }
+  ]
+ },
+ "runtime_s": 3.487636654000198,
+ "notes": [
+  "Peak memory is Nano's peak traced NumPy allocation during one step (tracemalloc); PyTorch's allocator is not visible to tracemalloc, so no PyTorch peak is claimed.",
+  "FLOPs are analytic (backward counted as 2x forward)."
+ ]
+}

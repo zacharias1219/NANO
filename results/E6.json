@@ -1,6 +1,6 @@
 {
  "id": "E6",
- "generated_at": "2026-11-06T08:33:46+00:00",
+ "generated_at": "2026-11-06T10:08:56+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -19,7 +19,7 @@
   "argv": "/home/user/NANO/experiments/fd_error.py"
  },
  "git": {
-  "commit": "914ecfad99dea933a26bb3ba2dcfb881046a3c7c",
+  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
   "dirty": true
  },
  "title": "E6 finite-difference error vs step size h",
@@ -893,5 +893,5 @@
  "figures": [
   "figures/e6_fd_error.png"
  ],
- "runtime_s": 3.1875897449999684
+ "runtime_s": 3.1893590720001157
 }

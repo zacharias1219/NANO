@@ -88,9 +88,11 @@ def acceptance(frags: dict) -> dict:
     A["A9"] = criterion("Library size", "under 1500 lines in nano/", loc, loc < 1500, "make loc")
     present = [e for e in EXPECTED if e in frags]
     repro = os.environ.get("NANO_REPRO") == "1"
+    clean = os.environ.get("NANO_RAW_PREEXISTING") == "0"  # no cached sweep runs when make repro started
+    ok = len(present) == len(EXPECTED) and repro
     A["A10"] = criterion("Reproduction", "make repro succeeds from a clean clone and regenerates results.json",
-                         {"fragments_present": present, "ran_under_make_repro": repro},
-                         (len(present) == len(EXPECTED)) and (repro or None), "CI job .github/workflows/repro.yml")
+                         {"fragments_present": present, "ran_under_make_repro": repro, "from_clean_clone": clean},
+                         (True if clean else None) if ok else False, "CI job .github/workflows/repro.yml")
     return A
 
 

@@ -1,6 +1,6 @@
 {
  "id": "E2",
- "generated_at": "2026-11-06T10:07:09+00:00",
+ "generated_at": "2026-11-06T10:08:39+00:00",
  "environment": {
   "python": "3.13.18",
   "numpy": "2.5.3",
@@ -16,10 +16,10 @@
    "OPENBLAS_NUM_THREADS": "1",
    "MKL_NUM_THREADS": "1"
   },
-  "argv": "/home/user/NANO/experiments/trainability.py --analyze"
+  "argv": "/home/user/NANO/experiments/trainability.py"
  },
  "git": {
-  "commit": "96074fc4ba0ff0c453cd8d908b7a42933be6b0b6",
+  "commit": "e021997a984ef630cc69c26d5d6ff73365b15ee9",
   "dirty": true
  },
  "title": "E2 trainability study (pre-registered)",
