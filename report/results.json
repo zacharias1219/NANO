@@ -1,9 +1,9 @@
 {
  "schema_version": "1.0",
  "project": "1A-nano",
- "generated_at": "2026-11-06T10:12:04+00:00",
+ "generated_at": "2026-11-06T10:12:50+00:00",
  "git": {
-  "commit": "634f287fd449bf339f15d1739754ddeab23745fa",
+  "commit": "4682d86a96bea4e1afd581022ac757d41117b6a8",
   "dirty": true
  },
  "environment": {
@@ -110,7 +110,7 @@
     "from_clean_clone": false
    },
    "pass": null,
-   "checked_by": "CI job .github/workflows/repro.yml"
+   "checked_by": "CI job .github/workflows/repro.yml; scripts/verify_repro.py"
   }
  },
  "experiments": {

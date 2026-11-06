@@ -125,6 +125,8 @@ def collect(fragment_dir="results", out_path="report/results.json", acceptance: 
     frags = {}
     for p in sorted(Path(fragment_dir).glob("*.json")):
         d = json.loads(p.read_text())
+        if "title" not in d:  # bookkeeping records (e.g. REPRO.json) are not experiments
+            continue
         frags[d["id"]] = d
     doc = {
         "schema_version": SCHEMA_VERSION,

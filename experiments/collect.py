@@ -90,9 +90,16 @@ def acceptance(frags: dict) -> dict:
     repro = os.environ.get("NANO_REPRO") == "1"
     clean = os.environ.get("NANO_RAW_PREEXISTING") == "0"  # no cached sweep runs when make repro started
     ok = len(present) == len(EXPECTED) and repro
-    A["A10"] = criterion("Reproduction", "make repro succeeds from a clean clone and regenerates results.json",
-                         {"fragments_present": present, "ran_under_make_repro": repro, "from_clean_clone": clean},
-                         (True if clean else None) if ok else False, "CI job .github/workflows/repro.yml")
+    rec_path = ROOT / "results" / "REPRO.json"  # evidence of a separate clean-clone run (scripts/verify_repro.py)
+    rec = json.loads(rec_path.read_text()) if rec_path.exists() else {}
+    verified = bool(rec.get("make_repro_succeeded") and rec.get("clone_A10", {}).get("from_clean_clone"))
+    value = {"fragments_present": present, "ran_under_make_repro": repro, "from_clean_clone": clean}
+    if rec:
+        value.update(clean_clone_commit=rec["clone_commit"][:10], clean_clone_succeeded=rec["make_repro_succeeded"],
+                     deterministic_results_identical=rec["deterministic_results_identical"])
+    A["A10"] = criterion("Reproduction", "make repro succeeds from a clean clone and regenerates results.json", value,
+                         (True if (clean or verified) else None) if ok else False,
+                         "CI job .github/workflows/repro.yml; scripts/verify_repro.py")
     return A
 
 
